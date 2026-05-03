@@ -10,7 +10,7 @@
 
 ## 项目介绍
 
-Open-ADBLLM 是一个轻量级 ADB 命令 HTTP 服务。与Open_AutoGLM不同，它**不做 VLM 决策**——只负责执行 ADB 指令。截图、点击、滑动、打字等操作全部封装为 REST API，交给有视觉能力的上游 AI Agent 来决策。
+Open-ADBLLM 是一个轻量级 ADB 命令 HTTP 服务。与Open_AutoGLM不同，它**不做 VLM 决策**——只负责执行 ADB 指令。截图、点击、滑动、打字等操作全部封装为 REST API，交给有视觉能力的上游 AI Agent 来决策。(原理上来说，你似乎可以让你的Agent帮你越狱🤔)
 
 **典型工作流**：
 
