@@ -298,4 +298,4 @@ docker build -t open-adbllm .
 
 ## License
 
-本项目的 ADB 模块基于开源项目构建。仅供研究和学习使用。
+[MIT License](LICENSE)
