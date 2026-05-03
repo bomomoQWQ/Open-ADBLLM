@@ -3,28 +3,28 @@
 > ADB 命令 HTTP API + 网页控制台，为上游 AI Agent 提供手机底层操控能力。
 
 ```
-上级 Agent (GPT-4V/千问VL) ── HTTP ──► Open-ADBLLM ── ADB ──► 📱
-                                        │
-                                        └── 网页控制台 (开关/密钥/日志)
+上位 Agent (视觉模型) ── HTTP ──► Open-ADBLLM ── ADB ──► 📱
+                                  │
+                                  └── 网页控制台 (开关/密钥/日志)
 ```
 
 ## 项目介绍
 
-Open-ADBLLM 是一个轻量级 ADB 命令 HTTP 服务。与 Open-AutoGLM 不同，它**不做 VLM 决策**——只负责执行 ADB 指令。截图、点击、滑动、打字等操作全部封装为 REST API，交给有视觉能力的上游 AI Agent（如 GPT-4V、千问 VL）来决策。
+Open-ADBLLM 是一个轻量级 ADB 命令 HTTP 服务。与传统 Phone Agent 不同，它**不做 VLM 决策**——只负责执行 ADB 指令。截图、点击、滑动、打字等操作全部封装为 REST API，交给有视觉能力的上游 AI Agent 来决策。
 
 **典型工作流**：
 
 ```
-1. AstrBot: GET /screenshot          → 拿到手机截图
-2. AstrBot: 看图，决定点"设置"图标  → 坐标 [125, 560]
-3. AstrBot: POST /tap {x:125,y:560} → 点击
-4. AstrBot: GET /screenshot          → 确认进入设置页
-5. AstrBot: 任务完成
+1. 上位 Agent: GET /screenshot          → 拿到手机截图
+2. 上位 Agent: 看图，决定点"设置"图标  → 坐标 [125, 560]
+3. 上位 Agent: POST /tap {x:125,y:560} → 点击
+4. 上位 Agent: GET /screenshot          → 确认进入设置页
+5. 上位 Agent: 任务完成
 ```
 
 ## 懒人版快速安装
 
-使用 Claude Code 或其他 AI 编程助手：
+使用 AI 编程助手（如 Claude Code）：
 
 ```
 访问文档，为我安装 Open-ADBLLM
@@ -224,7 +224,7 @@ requests.post(f"{BASE}/tap", json={"x": 500, "y": 800})
 # 按键
 requests.post(f"{BASE}/key", json={"key": "home"})
 
-# 唤醒（需黄色权限）
+# 唤醒（需黄色权限开启）
 requests.post(f"{BASE}/device/wake")
 
 # 危险操作（需红色密钥）
@@ -279,11 +279,11 @@ adb shell ime enable com.android.adbkeyboard/.AdbIME
 
 支付/银行等敏感页面会自动返回黑屏。正常现象。
 
-### 和 Open-AutoGLM 的区别
+### 与传统 Phone Agent 的区别
 
-| | Open-AutoGLM | Open-ADBLLM |
+| | 传统 Phone Agent | Open-ADBLLM |
 |---|---|---|
-| 谁做决策 | 内置 VLM | 上游 Agent |
+| 谁做决策 | 内置 VLM | 上位 Agent |
 | 使用方法 | 发自然语言任务 | 逐步调用 API |
 | 适用模型 | 任意 VLM | 任意带视觉的模型 |
 | 复杂度 | 高（prompt/解析/循环检测） | 低（纯透传） |
@@ -298,4 +298,4 @@ docker build -t open-adbllm .
 
 ## License
 
-本项目基于 Open-AutoGLM 的 ADB 模块构建。仅供研究和学习使用。
+本项目的 ADB 模块基于开源项目构建。仅供研究和学习使用。
