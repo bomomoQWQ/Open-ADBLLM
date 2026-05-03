@@ -207,6 +207,8 @@ POST /root/enable             # 开启 root
 
 ## Python 调用示例
 
+> 📦 上位 Agent 集成用 Skill 包：`Open-ADBLLM_Skill.zip`（含 SKILL.md）。可直接导入 AstrBot 等平台使用。
+
 ```python
 import requests, base64
 from io import BytesIO
