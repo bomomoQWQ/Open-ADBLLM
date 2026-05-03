@@ -382,50 +382,122 @@ async def log_stream():
 # Web Console (single page)
 # ---------------------------------------------------------------------------
 
-_CONSOLE_HTML = """<!DOCTYPE html>
-<html lang="zh">
-<head><meta charset="UTF-8"><title>Open-ADBLLM Console</title>
+_CONSOLE_HTML = r"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Open-ADBLLM Console</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}body{font-family:monospace;display:flex;height:100vh;background:#1a1a2e;color:#e0e0e0}
-#log{flex:1;overflow-y:auto;padding:12px;background:#16213e;border-right:1px solid #333}
-#panel{width:320px;padding:16px;display:flex;flex-direction:column;gap:12px}
-h3{color:#00d4aa}
-.btn{padding:10px;border:none;border-radius:4px;cursor:pointer;font-weight:bold}
-.btn-green{background:#00d4aa;color:#111}
-.btn-yellow{background:#f0a500;color:#111}
-.btn-red{background:#e94560;color:#fff}
-.btn-off{background:#555;color:#aaa}
-.key-box{background:#0f3460;padding:10px;border-radius:4px;word-break:break-all;font-size:13px}
-.log-line{padding:2px 0;border-bottom:1px solid #1a1a2e;font-size:13px}
-.countdown{color:#e94560}
-</style></head>
+:root{--bg:#0f172a;--card:#1e293b;--border:#334155;--green:#10b981;--yellow:#f59e0b;--red:#ef4444;--text:#e2e8f0;--muted:#94a3b8;--accent:#6366f1}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh}
+.sidebar{width:260px;background:var(--card);border-right:1px solid var(--border);padding:16px;display:flex;flex-direction:column;gap:8px;overflow-y:auto}
+.main{flex:1;display:flex;flex-direction:column}
+.toolbar{padding:12px 16px;background:var(--card);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+#log{flex:1;overflow-y:auto;padding:12px 16px;font-family:'JetBrains Mono','Cascadia Code',monospace;font-size:13px}
+h2{font-size:16px;font-weight:600;margin-bottom:8px}
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot-on{background:var(--green)}
+.dot-off{background:var(--red)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px}
+.card-title{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.btn{width:100%;padding:10px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;margin-bottom:6px}
+.btn:active{transform:scale(.97)}
+.btn-green{background:var(--green);color:#fff}
+.btn-yellow{background:var(--yellow);color:#000}
+.btn-red{background:var(--red);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{background:var(--card)}
+.switch-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0}
+.switch{position:relative;width:44px;height:24px}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--border);border-radius:24px;transition:.3s}
+.slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+input:checked+.slider{background:var(--yellow)}
+input:checked+.slider:before{transform:translateX(20px)}
+.key-box{background:#0d1117;padding:10px;border-radius:6px;word-break:break-all;font-size:13px;font-family:monospace;margin-top:6px}
+.key-timer{color:var(--red);font-size:12px;margin-top:4px}
+.log-line{padding:3px 0;font-size:12px;border-bottom:1px solid #1e293b;color:var(--muted)}
+.log-line .ts{color:var(--muted);margin-right:8px}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700;margin-right:4px}
+.badge-g{background:var(--green);color:#000}
+.badge-y{background:var(--yellow);color:#000}
+.badge-r{background:var(--red);color:#fff}
+.lang-switch{font-size:12px;color:var(--muted);cursor:pointer;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:transparent}
+.lang-switch:hover{color:var(--text)}
+.api-row{display:flex;gap:4px;flex-wrap:wrap;font-size:11px;color:var(--muted)}
+.api-row span{background:var(--bg);padding:2px 6px;border-radius:3px}
+</style>
+</head>
 <body>
-<div id="log"><h3>📜 Log</h3></div>
-<div id="panel">
-<h3>🎛 Open-ADBLLM</h3>
-<button class="btn btn-yellow" id="btn-yellow" onclick="toggleYellow()">🟡 Yellow: OFF</button>
-<button class="btn btn-red" id="btn-genkey" onclick="genKey()">🔴 Generate Red Key</button>
+<div class="sidebar">
+<h2>🎛 Open-ADBLLM</h2>
+<div><span class="status-dot dot-off" id="adb-dot"></span><span id="adb-text" data-zh="ADB: 未连接" data-en="ADB: Disconnected">ADB: 未连接</span></div>
+
+<div class="card">
+<div class="card-title" data-zh="🟡 高级权限" data-en="🟡 Advanced">🟡 高级权限</div>
+<div class="switch-row">
+<span id="yl-label" data-zh="黄级操作" data-en="Yellow Ops">黄级操作</span>
+<label class="switch"><input type="checkbox" id="yl-switch" onchange="toggleYellow()"><span class="slider"></span></label>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title" data-zh="🔴 危险密钥" data-en="🔴 Danger Key">🔴 危险密钥</div>
+<button class="btn btn-red" onclick="genKey()" data-zh="生成一次性密钥" data-en="Generate Key">生成一次性密钥</button>
 <div id="key-area"></div>
-<div style="margin-top:auto;font-size:11px;color:#666">v0.1.0</div>
+</div>
+
+<div class="card">
+<div class="card-title" data-zh="📡 API 端点" data-en="📡 API">📡 API 端点</div>
+<div class="api-row"><span>/health</span><span>/screenshot</span><span>/tap</span><span>/swipe</span><span>/type</span><span>/key</span><span>/app/*</span><span>/device/*</span></div>
+</div>
+
+<div style="margin-top:auto">
+<button class="btn btn-outline" onclick="clearLog()" data-zh="清空日志" data-en="Clear">清空日志</button>
+<div style="text-align:center;margin-top:8px;font-size:11px;color:var(--muted)">v0.1.0</div>
+</div>
+</div>
+
+<div class="main">
+<div class="toolbar">
+<strong data-zh="📜 实时日志" data-en="📜 Live Log">📜 实时日志</strong>
+<button class="lang-switch" onclick="toggleLang()" id="lang-btn">EN</button>
+</div>
+<div id="log"></div>
 </div>
 <script>
+let lang='zh';
+const T={zh:{yl_on:'黄级: 开启',yl_off:'黄级: 关闭',gen:'生成一次性密钥',key_exp:'过期',adb_ok:'ADB: 已连接',adb_no:'ADB: 未连接'},
+en:{yl_on:'Yellow: ON',yl_off:'Yellow: OFF',gen:'Generate Key',key_exp:'Expires',adb_ok:'ADB: Connected',adb_no:'ADB: Disconnected'}};
+
+function t(k){return T[lang]?.[k]||k}
+function tr(){document.querySelectorAll('[data-zh][data-en]').forEach(e=>e.textContent=lang==='zh'?e.dataset.zh:e.dataset.en)}
+function toggleLang(){lang=lang==='zh'?'en':'zh';document.getElementById('lang-btn').textContent=lang==='zh'?'EN':'中文';tr()}
+
 const es=new EventSource("/stream");
-es.onmessage=e=>{let d=document.createElement("div");d.className="log-line";d.textContent=e.data;
-let log=document.getElementById("log");log.appendChild(d);log.scrollTop=log.scrollHeight};
+es.onmessage=e=>{
+let d=document.createElement("div");d.className="log-line";
+let now=new Date().toLocaleTimeString();
+d.innerHTML=`<span class="ts">${now}</span>${e.data}`;
+let log=document.getElementById("log");log.appendChild(d);log.scrollTop=log.scrollHeight}
+
 async function toggleYellow(){
 let r=await fetch("/admin/yellow",{method:"POST"});let d=await r.json();
-let btn=document.getElementById("btn-yellow");
-btn.textContent=d.yellow_enabled?"🟡 Yellow: ON":"🟡 Yellow: OFF";
-btn.className=d.yellow_enabled?"btn btn-yellow":"btn btn-off"}
+document.getElementById("yl-switch").checked=d.yellow_enabled}
 async function genKey(){
 let r=await fetch("/admin/gen-key",{method:"POST"});let d=await r.json();
-let area=document.getElementById("key-area");
-area.innerHTML=`<div class="key-box">${d.key}<br><span class="countdown">Expires in <span id="timer">60</span>s</span></div>`;
-let t=60;let i=setInterval(()=>{t--;document.getElementById("timer").textContent=t;if(t<=0){clearInterval(i);area.innerHTML=""}},1000)}
-fetch("/admin/yellow").then(r=>r.json()).then(d=>{
-let btn=document.getElementById("btn-yellow");
-btn.textContent=d.yellow_enabled?"🟡 Yellow: ON":"🟡 Yellow: OFF";
-btn.className=d.yellow_enabled?"btn btn-yellow":"btn btn-off"})
+let a=document.getElementById("key-area");
+let k=d.key.slice(0,4)+'...'+d.key.slice(-4);
+a.innerHTML=`<div class="key-box" title="${d.key}">${d.key}</div><div class="key-timer">⏱ ${k} · <span id="timer">60</span>s ${t('key_exp')}</div>`;
+let i=60;let ti=setInterval(()=>{i--;let el=document.getElementById('timer');if(el)el.textContent=i;if(i<=0){clearInterval(ti);a.innerHTML=''}},1000)}
+function clearLog(){document.getElementById('log').innerHTML=''}
+
+fetch("/admin/yellow").then(r=>r.json()).then(d=>{document.getElementById("yl-switch").checked=d.yellow_enabled})
+fetch("/health").then(r=>r.json()).then(d=>{
+let dot=document.getElementById("adb-dot"),txt=document.getElementById("adb-text");
+dot.className=d.adb_available?"status-dot dot-on":"status-dot dot-off";
+txt.textContent=d.adb_available?t('adb_ok'):t('adb_no')})
 </script></body></html>"""
 
 
